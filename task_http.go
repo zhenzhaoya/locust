@@ -1,9 +1,9 @@
 package locust
 
 import (
-	"locust/core"
-	"locust/model"
-	"locust/utils"
+	"github.com/zhenzhaoya/locust/core"
+	"github.com/zhenzhaoya/locust/model"
+	"github.com/zhenzhaoya/locust/utils"
 )
 
 func Init(path string, app *Locust, dic map[string]interface{}) bool {

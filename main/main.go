@@ -2,13 +2,14 @@ package main
 
 import (
 	"flag"
-	"locust"
-	"locust/config"
-	"locust/utils"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/zhenzhaoya/locust"
+	"github.com/zhenzhaoya/locust/config"
+	"github.com/zhenzhaoya/locust/utils"
 )
 
 var (

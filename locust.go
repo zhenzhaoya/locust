@@ -5,9 +5,9 @@ import (
 	"sync"
 	"time"
 
-	"locust/core"
-	"locust/model"
-	"locust/utils"
+	"github.com/zhenzhaoya/locust/core"
+	"github.com/zhenzhaoya/locust/model"
+	"github.com/zhenzhaoya/locust/utils"
 
 	"encoding/json"
 	"strconv"

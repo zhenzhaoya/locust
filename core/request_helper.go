@@ -5,9 +5,10 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"locust/model"
 	"strings"
 	"time"
+
+	"github.com/zhenzhaoya/locust/model"
 )
 
 type Options struct {

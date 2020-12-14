@@ -7,7 +7,7 @@ import (
 	"strings"
 	"sync"
 
-	"locust/utils"
+	"github.com/zhenzhaoya/locust/utils"
 )
 
 var (

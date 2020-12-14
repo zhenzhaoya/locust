@@ -1,4 +1,4 @@
-module locust
+module github.com/zhenzhaoya/locust
 
 go 1.14
 
