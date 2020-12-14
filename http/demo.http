@@ -1,3 +1,12 @@
 ### 
-GET <%=BaseUrl %>/README.md
+GET <%=BaseUrl %>/view/login.jsp
+
+### START
+POST <%=BaseUrl %>/api/pub/login
+
+{"name":"demo","pwd":"123456","url":"/view/login.jsp"}
+
+<%
+  Data["code"] == 1
+%>
 

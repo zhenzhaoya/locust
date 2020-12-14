@@ -1,5 +1,5 @@
-BaseUrl = "https://github.com/yiyedata/simplified-scrapy/blob/master" # Base url, Can be empty.
-HttpFile = "http/demo.http" # HTTP request profile
+BaseUrl = "https://github.com/zhenzhaoya/locust/" # Base url, Can be empty.
+HttpFile = "../http/demo.http" # HTTP request profile
 Port = 8080 
 UserCount = 1
 MinWait = 10000 # Minimum time interval in milliseconds

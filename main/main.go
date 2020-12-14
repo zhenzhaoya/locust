@@ -12,13 +12,13 @@ import (
 )
 
 var (
-	app *locust.Locust //= locust.GetAPP("index.html")
+	app *locust.Locust //= locust.GetAPP("../index.html")
 )
 
 func main() {
 	// fmt.Println(rootPath)
 	var configFile string
-	flag.StringVar(&configFile, "config", "/config.toml", "config file path")
+	flag.StringVar(&configFile, "config", "config.toml", "config file path")
 	flag.Parse()
 	log.Println("config file: " + configFile)
 

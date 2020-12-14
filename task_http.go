@@ -78,6 +78,8 @@ func httpTask(task *core.HttpTask, user *model.ContextModel) *model.ContextModel
 	// 		user.D[k] = v
 	// 	}
 	// }
-	user.Cookies = resp.Cookies
+	if resp.Cookies != nil && len(resp.Cookies) > 0 {
+		user.Cookies = resp.Cookies
+	}
 	return user.SetData(resp.Duration, err)
 }
