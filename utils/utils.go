@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"math/rand"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -237,4 +239,21 @@ func PathExists(path string) (bool, error) {
 		return false, nil
 	}
 	return false, err
+}
+
+func GetPath(path string) string {
+	b, _ := PathExists(path)
+	if !b {
+		rootPath := filepath.Dir(os.Args[0])
+		if strings.HasPrefix(path, "/") || strings.HasPrefix(path, "\\") {
+			path = rootPath + path
+		} else {
+			path = rootPath + "/" + path
+		}
+		b, _ = PathExists(path)
+		if !b {
+			log.Println("file not exist. " + path)
+		}
+	}
+	return path
 }

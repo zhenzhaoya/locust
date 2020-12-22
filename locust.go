@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/zhenzhaoya/locust/config"
 	"github.com/zhenzhaoya/locust/core"
 	"github.com/zhenzhaoya/locust/model"
 	"github.com/zhenzhaoya/locust/utils"
@@ -69,6 +70,31 @@ func GetAPP(path string) *Locust {
 	locust.indexHtml = path
 	return locust._init()
 }
+
+func SetConfig(app *Locust, configFile string) *config.Config {
+
+	if configFile != "" {
+		configFile = utils.GetPath(configFile)
+		c := config.New(configFile)
+		if c.MinWait > 0 {
+			app.MinWait = c.MinWait
+		}
+		if c.MaxWait > 0 {
+			app.MaxWait = c.MaxWait
+		}
+		app.UserCount = c.UserCount
+		app.SelfDataName = c.SelfDataName
+		dic := make(map[string]interface{}, 0)
+		dic["BaseUrl"] = c.BaseUrl
+		if c.HttpFile != "" {
+			Init(utils.GetPath(c.HttpFile), app, dic)
+		}
+
+		return c
+	}
+	return nil
+}
+
 func (locust *Locust) getPara() string {
 	var build strings.Builder = strings.Builder{}
 	build.WriteString(`{`)

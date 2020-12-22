@@ -603,8 +603,9 @@ func (task *HttpTask) GetKey() string {
 		if index >= 0 {
 			index2 := strings.Index(v, "%>")
 			line := v[index+3 : index2]
+			line = preDeal(line)
 			value := task.dealString(getOperator(line), ConstData)
-			v = v[0:index] + postDeal(value) + v[index2+2:]
+			v = v[0:index] + value + v[index2+2:]
 		} else {
 			v = utils.Trim(v)
 			break
@@ -620,6 +621,7 @@ func (task *HttpTask) GetHeader(d map[string]interface{}) map[string]string {
 			if index >= 0 {
 				index2 := strings.Index(v, "%>")
 				line := v[index+3 : index2]
+				line = preDeal(line)
 				value := task.dealString(getOperator(line), d)
 				v = v[0:index] + postDeal(value) + v[index2+2:]
 			} else {
@@ -637,6 +639,7 @@ func (task *HttpTask) GetUrl(d map[string]interface{}) string {
 		if index >= 0 {
 			index2 := strings.Index(v, "%>")
 			line := v[index+3 : index2]
+			line = preDeal(line)
 			value := task.dealString(getOperator(line), d)
 			v = v[0:index] + postDeal(value) + v[index2+2:]
 		} else {

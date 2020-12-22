@@ -1,12 +1,18 @@
 ### 
-GET <%=BaseUrl %>/view/login.jsp
-
-### START
-POST <%=BaseUrl %>/api/pub/login
-
-{"name":"demo","pwd":"123456","url":"/view/login.jsp"}
+GET <%=BaseUrl %>/blob/master/http/demo.http
+Referer: <%=BaseUrl %>/blob/master/http/demo.http
 
 <%
-  Data["code"] == 1
+  StatusCode == 200
+%>
+
+### START
+POST <%=BaseUrl %>/blob/master/http/demo.http
+Referer: <%=BaseUrl %>/blob/master/http/demo.http
+
+{"name":"demo","pwd":"123456"}
+
+<%
+  StatusCode != 200
 %>
 

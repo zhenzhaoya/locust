@@ -54,6 +54,7 @@ func Req(url string, opts Options) *model.RespStruct {
 	var header http.Header
 	var body []byte
 	var statusCode int
+	var cookies []*http.Cookie
 	if err == nil {
 		defer resp.Body.Close()
 		statusCode = resp.StatusCode
@@ -62,9 +63,9 @@ func Req(url string, opts Options) *model.RespStruct {
 		if err != nil {
 			fmt.Println("Req.1", err)
 		}
+		cookies = resp.Cookies()
 	}
 	req.Close = true
-	cookies := resp.Cookies()
 
 	// fmt.Println(cookies)
 	// fmt.Println(string(body)) //fmt.Sprintf("%s", err)
