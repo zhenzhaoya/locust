@@ -145,6 +145,8 @@ func (server *HttpServer) staticHandler(w http.ResponseWriter, r *http.Request) 
 	path := r.URL.Path
 	if path == "/" {
 		path = server.IndexHtml
+	} else if strings.HasPrefix(path, "/http/") {
+		path = server.httpFolder + path[6:]
 	} else {
 		path = basePath + path[1:]
 	}
