@@ -1,0 +1,11 @@
+{
+  "BaseUrl":"https://github.com/zhenzhaoya/locust/",
+  "HttpFile": "../http/demo.http",
+  "HttpFolder": "./http/",
+  "Port": 8080,
+  "UserCount": 1,
+  "MinWait": 10000,
+  "MaxWait": 10000,
+  "StartMinWait": 1000,
+  "StartMaxWait": 1000
+}

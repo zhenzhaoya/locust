@@ -14,7 +14,7 @@ var (
 
 func main() {
 	var configFile string
-	flag.StringVar(&configFile, "config", "config.toml", "config file path")
+	flag.StringVar(&configFile, "config", "config.json", "config file path")
 	flag.Parse()
 	log.Println("config file: " + configFile)
 	app = locust.GetAPP(utils.GetPath("../index.html"), utils.GetPath("../http"))

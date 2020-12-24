@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-
-	"github.com/BurntSushi/toml"
 )
 
 type Config struct {
@@ -39,9 +37,15 @@ func GetDefault() *Config {
 }
 
 func New(configPath string) *Config {
-	myConfig := &Config{}
-	myConfig.loadConfig(configPath)
-	return myConfig
+	dat, err := ioutil.ReadFile(configPath)
+	if err != nil {
+		log.Fatalf("error: %v", err)
+	}
+	c, err := Json2Config(dat)
+	if err != nil {
+		log.Fatalf("error: %v", err)
+	}
+	return c
 }
 
 func Json2Config(b []byte) (*Config, error) {
@@ -51,17 +55,7 @@ func Json2Config(b []byte) (*Config, error) {
 	return c, err
 }
 
-func (config *Config) loadConfig(configPath string) {
-	dat, err := ioutil.ReadFile(configPath)
-	if err != nil {
-		log.Fatalf("error: %v", err)
-	}
-	if _, err := toml.Decode(string(dat), config); err != nil {
-		log.Fatalf("error: %v", err)
-	}
-}
-
-func (config *Config) ToString() string {
+func (config *Config) ToJson() string {
 	v, err := json.Marshal(config)
 	if err == nil {
 		return string(v)

@@ -99,6 +99,7 @@ func SetConfig(app *Locust, configFile string) *config.Config {
 		if c.Port > 0 {
 			myConfig.Port = c.Port
 		}
+		myConfig.SelfConfig = c.SelfConfig
 
 		myConfig.UserCount = c.UserCount
 		myConfig.SelfDataName = c.SelfDataName
@@ -114,7 +115,7 @@ func SetConfig(app *Locust, configFile string) *config.Config {
 }
 
 func (locust *Locust) getConfig() string {
-	return locust.UserConfig.ToString()
+	return locust.UserConfig.ToJson()
 }
 
 func (locust *Locust) _init() *Locust {
@@ -161,6 +162,16 @@ func (locust *Locust) setHttpTask(path string) error {
 	locust.runFlag = runFlag
 	return nil
 }
+func (locust *Locust) ClearTask() {
+	locust.runFlag = false
+	locust.tasks = make(map[string]*TaskInfo)
+	locust.startTasks = make(map[int]*StartInfo)
+}
+func (locust *Locust) Restart() {
+	locust.restart()
+	locust.runFlag = true
+}
+
 func (locust *Locust) setData(b []byte) error {
 	defer func() {
 		if error := recover(); error != nil {
