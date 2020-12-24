@@ -6,22 +6,6 @@
 
   <link href="static/css/main.css" rel="stylesheet">
   <link href="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
-  <script type="text/javascript" src="https://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
-  <!-- <script type="text/javascript" src="https://cdn.staticfile.org/jquery/2.1.1/jquery.min.js"></script> -->
-  <script type="text/javascript" src="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
-  <script type="text/javascript">
-    function mySubmit() {
-      $("#spMsg").html('');
-      // var data = JSON.parse($("#data").val())
-      $.post("api", $("#data").val(), function (d, status) {
-        if (status==200){
-          $("#spMsg").html(d.message);
-        }else{
-          $("#spMsg").html(status);
-        }
-      });
-    }
-  </script>
 </head>
 
 <body>
@@ -36,6 +20,8 @@
       <div class="navbar-collapse collapse">
         <ul class="nav navbar-nav">
           <li><a href="./index.html">Home</a></li>
+          <li><a href="./config.html">Setting</a></li>
+          <li><a href="./task.html">Task</a></li>
         </ul>
       </div>
     </div>
@@ -48,15 +34,7 @@
           <div class="form-group">
             <label class="col-md-2 control-label"></label>
             <div class="col-md-10">
-              <textarea class="form-control input-long" id="data" rows="9" cols="20">
-{
-  "MinWait":1000,
-  "MaxWait":1000,
-  "UserCount":1,
-  "RunFlag":true,
-  "Reset":false,
-  "BaseUrl":"https://github.com/zhenzhaoya"
-}</textarea>
+              <textarea class="form-control input-long" id="data" rows="15" cols="20"></textarea>
             </div>
           </div>
         </div>
@@ -73,6 +51,31 @@
       </div>
     </form>
   </div>
+  <script type="text/javascript" src="https://cdn.staticfile.org/jquery/2.1.1/jquery.min.js"></script>
+  <script type="text/javascript" src="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <script type="text/javascript">
+    function getConfig() {
+      $.get("para", function (d, status) {
+        if (status == "success") {
+          $("#data").html(JSON.stringify(d, null, 4))
+        } else {
+          $("#spMsg").html(status);
+        }
+      });
+    }
+    getConfig();
+    function mySubmit() {
+      $("#spMsg").html('');
+      // var data = JSON.parse($("#data").val())
+      $.post("api", $("#data").val(), function (d, status) {
+        if (status == 200) {
+          $("#spMsg").html(d.message);
+        } else {
+          $("#spMsg").html(status);
+        }
+      });
+    }
+  </script>
 </body>
 
 </html>

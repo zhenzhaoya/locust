@@ -1,6 +1,9 @@
 BaseUrl = "https://github.com/zhenzhaoya/locust/" # Base url, Can be empty.
 HttpFile = "../http/demo.http" # HTTP request profile
+HttpFolder = "./http/"
 Port = 8080 
 UserCount = 1
 MinWait = 10000 # Minimum time interval in milliseconds
 MaxWait = 10000 # Maximum time interval in milliseconds
+StartMinWait = 1000 # Minimum time interval in milliseconds
+StartMaxWait = 1000 # Maximum time interval in milliseconds

@@ -26,38 +26,32 @@ type StartInfo struct {
 	Key     string
 }
 type Locust struct {
-	UserCount       int
-	MinWait         int
-	MaxWait         int
-	SMinWait        int
-	SMaxWait        int
-	SelfDataName    string
-	NextRandom      bool
+	UserConfig      *config.Config
 	WaitingDuration func(*model.ContextModel) time.Duration
 	UserLogout      func(*model.ContextModel)
 	StartDuration   func() time.Duration
 	SelfPara        func() map[string]interface{}
-	// WebSocketInfo   func() int
-	SetData    func(map[string]interface{})
-	urlMap     map[string]*model.Statistics
-	errorMap   map[string]int
-	mu         *sync.Mutex
-	tasks      map[string]*TaskInfo //map[string]HandlerFunc
-	startTasks map[int]*StartInfo   //map[string]HandlerFunc
-	taskRate   [][2]int
-	maxRate    int
-	taskKeys   []string
-	taskLen    int
-	realCount  int
-	selfData   float64
-	startTask  StartFunc
-	startKey   string
-	endTask    HandlerFunc
-	runFlag    bool
-	subFlag    bool
-	lastTime   time.Time
-	httpServer *core.HttpServer
-	indexHtml  string
+	SetData         func(*config.Config)
+	urlMap          map[string]*model.Statistics
+	errorMap        map[string]int
+	mu              *sync.Mutex
+	tasks           map[string]*TaskInfo
+	startTasks      map[int]*StartInfo
+	taskRate        [][2]int
+	maxRate         int
+	taskKeys        []string
+	taskLen         int
+	realCount       int
+	selfData        float64
+	startTask       StartFunc
+	startKey        string
+	endTask         HandlerFunc
+	runFlag         bool
+	subFlag         bool
+	lastTime        time.Time
+	httpServer      *core.HttpServer
+	indexHtml       string
+	httpFilePath    string
 }
 
 func APP() *Locust {
@@ -65,25 +59,49 @@ func APP() *Locust {
 	locust.indexHtml = "locust/index.html"
 	return locust._init()
 }
-func GetAPP(path string) *Locust {
+func GetAPP(indexHtmlPath string, httpFilePath string) *Locust {
 	locust := &Locust{}
-	locust.indexHtml = path
+	locust.indexHtml = indexHtmlPath
+	if httpFilePath != "" {
+		httpFilePath = strings.TrimRight(httpFilePath, "/")
+		httpFilePath = strings.TrimRight(httpFilePath, "\\")
+		locust.httpFilePath = httpFilePath + "/"
+	}
 	return locust._init()
 }
 
 func SetConfig(app *Locust, configFile string) *config.Config {
-
+	myConfig := app.UserConfig
 	if configFile != "" {
 		configFile = utils.GetPath(configFile)
 		c := config.New(configFile)
+		if c.UserCount > 0 {
+			myConfig.UserCount = c.UserCount
+		}
 		if c.MinWait > 0 {
-			app.MinWait = c.MinWait
+			myConfig.MinWait = c.MinWait
 		}
 		if c.MaxWait > 0 {
-			app.MaxWait = c.MaxWait
+			myConfig.MaxWait = c.MaxWait
 		}
-		app.UserCount = c.UserCount
-		app.SelfDataName = c.SelfDataName
+		if c.StartMinWait > 0 {
+			myConfig.StartMinWait = c.StartMinWait
+		}
+		if c.StartMaxWait > 0 {
+			myConfig.StartMaxWait = c.StartMaxWait
+		}
+		if c.BaseUrl != "" {
+			myConfig.BaseUrl = c.BaseUrl
+		}
+		if c.HttpFile != "" {
+			myConfig.HttpFile = c.HttpFile
+		}
+		if c.Port > 0 {
+			myConfig.Port = c.Port
+		}
+
+		myConfig.UserCount = c.UserCount
+		myConfig.SelfDataName = c.SelfDataName
 		dic := make(map[string]interface{}, 0)
 		dic["BaseUrl"] = c.BaseUrl
 		if c.HttpFile != "" {
@@ -95,50 +113,16 @@ func SetConfig(app *Locust, configFile string) *config.Config {
 	return nil
 }
 
-func (locust *Locust) getPara() string {
-	var build strings.Builder = strings.Builder{}
-	build.WriteString(`{`)
-	build.WriteString(`"UserCount":`)
-	build.WriteString(utils.GetStringValue(locust.UserCount))
-	build.WriteString(`,"RealCount":`)
-	build.WriteString(utils.GetStringValue(locust.realCount))
-	build.WriteString(`,"MinWait":`)
-	build.WriteString(utils.GetStringValue(locust.MinWait))
-	build.WriteString(`,"MaxWait":`)
-	build.WriteString(utils.GetStringValue(locust.MaxWait))
-	build.WriteString(`,"WaitingDuration":`)
-	build.WriteString(utils.GetStringValue(locust.WaitingDuration(nil) / time.Second))
-	build.WriteString(`,"StartDuration":`)
-	build.WriteString(utils.GetStringValue(locust.StartDuration() / time.Second))
-	build.WriteString(`,"RunFlag":`)
-	build.WriteString(utils.GetStringValue(locust.runFlag))
-	if locust.SelfPara != nil {
-		for k, v := range locust.SelfPara() {
-			build.WriteString(`,"`)
-			build.WriteString(k)
-			build.WriteString(`":`)
-			switch v.(type) {
-			case string:
-				build.WriteString(`"`)
-				build.WriteString(v.(string))
-				build.WriteString(`"`)
-			default:
-				build.WriteString(utils.GetStringValue(v))
-			}
-		}
-	}
-	build.WriteString("}")
-	return build.String()
+func (locust *Locust) getConfig() string {
+	return locust.UserConfig.ToString()
 }
+
 func (locust *Locust) _init() *Locust {
-	locust.httpServer = core.GetHttpServer(locust.indexHtml, locust.getJson, locust.getPara, locust.getError, locust.setData)
+	locust.UserConfig = config.GetDefault()
+	locust.httpServer = core.GetHttpServer(locust.indexHtml, locust.httpFilePath, locust.getJson,
+		locust.getConfig, locust.getError, locust.setData, locust.setHttpTask)
 	locust.lastTime = time.Now()
 	locust.runFlag = true
-	locust.MinWait = 5000
-	locust.MaxWait = 9000
-	locust.SMinWait = 1000
-	locust.SMaxWait = 1000
-	locust.NextRandom = true
 	locust.WaitingDuration = locust.waitingTime
 	locust.StartDuration = locust.startDuration
 	locust.errorMap = make(map[string]int)
@@ -146,61 +130,64 @@ func (locust *Locust) _init() *Locust {
 	locust.tasks = make(map[string]*TaskInfo)
 	locust.startTasks = make(map[int]*StartInfo)
 	locust.mu = new(sync.Mutex)
-	locust.SelfDataName = "SelfData"
 	return locust
 }
 func (locust *Locust) startDuration() time.Duration {
-	return time.Duration(utils.GetRandNum(locust.SMinWait, locust.SMaxWait)) * time.Millisecond
+	myConfig := locust.UserConfig
+	return time.Duration(utils.GetRandNum(myConfig.StartMinWait, myConfig.StartMaxWait)) * time.Millisecond
 }
 func (locust *Locust) waitingTime(*model.ContextModel) time.Duration {
-	return time.Duration(utils.GetRandNum(locust.MinWait, locust.MaxWait)) * time.Millisecond
+	myConfig := locust.UserConfig
+	return time.Duration(utils.GetRandNum(myConfig.MinWait, myConfig.MaxWait)) * time.Millisecond
 }
-func (locust *Locust) setData(dat map[string]interface{}) {
+func (locust *Locust) setHttpTask(path string) error {
+	defer func() {
+		if error := recover(); error != nil {
+			fmt.Println("setHttpTask: ", error)
+		}
+	}()
+	runFlag := locust.runFlag
+	if runFlag {
+		locust.runFlag = false
+	}
+	locust.UserConfig.HttpFile = path
+	locust.tasks = make(map[string]*TaskInfo)
+	locust.startTasks = make(map[int]*StartInfo)
+
+	dic := make(map[string]interface{}, 0)
+	dic["BaseUrl"] = locust.UserConfig.BaseUrl
+	Init(path, locust, dic)
+	locust.restart()
+	locust.runFlag = runFlag
+	return nil
+}
+func (locust *Locust) setData(b []byte) error {
 	defer func() {
 		if error := recover(); error != nil {
 			fmt.Println("setData: ", error)
 		}
 	}()
-
-	v, ok := dat["MinWait"]
-	if ok {
-		locust.MinWait = (int)(v.(float64))
+	// myConfig := locust.UserConfig
+	myConfig, err := config.Json2Config(b)
+	if err != nil {
+		return err
 	}
-	v, ok = dat["MaxWait"]
-	if ok {
-		locust.MaxWait = (int)(v.(float64))
-	}
-	v, ok = dat["SMinWait"]
-	if ok {
-		locust.SMinWait = (int)(v.(float64))
-	}
-	v, ok = dat["SMaxWait"]
-	if ok {
-		locust.SMaxWait = (int)(v.(float64))
-	}
-	v, ok = dat["UserCount"]
-	if ok {
-		locust.UserCount = (int)(v.(float64))
-	}
-	v, ok = dat["RunFlag"]
-	if ok {
-		locust.runFlag = v.(bool)
-	}
-
-	if locust.UserCount >= locust.realCount {
-		go locust.userThread(locust.UserCount - locust.realCount)
+	locust.UserConfig = myConfig
+	if myConfig.UserCount >= locust.realCount {
+		go locust.userThread(myConfig.UserCount - locust.realCount)
 	} else if locust.runFlag {
 		locust.runFlag = false
 		locust.subFlag = true
 		go locust.removeUserThread()
 	}
-	r, ok := dat["Reset"].(bool)
-	if ok && r {
+
+	if myConfig.Reset {
 		go locust.reset()
 	}
 	if locust.SetData != nil {
-		locust.SetData(dat)
+		locust.SetData(myConfig)
 	}
+	return nil
 }
 func (locust *Locust) reset() {
 	locust.mu.Lock()
@@ -260,7 +247,7 @@ func (locust *Locust) getJson() string {
 			fmt.Println("json.Marshal", err)
 		}
 	}
-	build.WriteString(fmt.Sprintf(`"SelfDataName":"%s",`, locust.SelfDataName))
+	build.WriteString(fmt.Sprintf(`"SelfDataName":"%s",`, locust.UserConfig.SelfDataName))
 	build.WriteString(fmt.Sprintf(`"SelfData":%f,`, locust.selfData))
 	build.WriteString(fmt.Sprintf(`"RealCount":%d,`, locust.realCount))
 	// if locust.WebSocketInfo != nil {
@@ -293,10 +280,13 @@ func (locust *Locust) Start(port int) {
 	go locust.start()
 	locust.httpServer.StartServer(port)
 }
-func (locust *Locust) start() {
+func (locust *Locust) restart() {
 	locust.taskLen = len(locust.tasks)
 	locust.taskKeys = make([]string, locust.taskLen)
 	locust.taskRate = make([][2]int, locust.taskLen)
+	if locust.taskLen == 0 {
+		return
+	}
 	i := 0
 	for k := range locust.tasks {
 		locust.taskKeys[i] = k
@@ -312,19 +302,22 @@ func (locust *Locust) start() {
 		locust.taskRate[j][1] = num
 	}
 	locust.maxRate = num
-	fmt.Println("Total users:", locust.UserCount)
-	locust.userThread(locust.UserCount)
+	fmt.Println("Total users:", locust.UserConfig.UserCount)
+}
+func (locust *Locust) start() {
+	locust.restart()
+	locust.userThread(locust.UserConfig.UserCount)
 	for {
 		if time.Since(locust.lastTime) > time.Minute {
 			locust.lastTime = time.Now()
-			locust.userThread(locust.UserCount - locust.realCount)
+			locust.userThread(locust.UserConfig.UserCount - locust.realCount)
 		}
 		time.Sleep(time.Duration(10 * time.Second))
 	}
 }
 func (locust *Locust) removeUserThread() {
 	for {
-		if locust.UserCount < locust.realCount {
+		if locust.UserConfig.UserCount < locust.realCount {
 			time.Sleep(time.Duration(10 * time.Millisecond))
 		} else {
 			break
@@ -332,14 +325,14 @@ func (locust *Locust) removeUserThread() {
 	}
 	locust.subFlag = false
 	locust.runFlag = true
-	go locust.userThread(locust.UserCount - locust.realCount)
+	go locust.userThread(locust.UserConfig.UserCount - locust.realCount)
 }
 func (locust *Locust) userThread(count int) {
 	if !locust.runFlag {
 		return
 	}
 	for i := 0; i < count; i++ {
-		if locust.UserCount <= locust.realCount {
+		if locust.UserConfig.UserCount <= locust.realCount {
 			break
 		}
 		go locust.doTask()
@@ -401,7 +394,7 @@ func (locust *Locust) doTask() {
 	i := 0
 	for {
 		if !locust.runFlag {
-			if !(locust.subFlag && locust.UserCount >= locust.realCount) {
+			if !(locust.subFlag && locust.UserConfig.UserCount >= locust.realCount) {
 				if locust.UserLogout != nil {
 					locust.UserLogout(user)
 				}
@@ -412,25 +405,27 @@ func (locust *Locust) doTask() {
 			i = 0
 		}
 		k, v := locust.getTask(i, user)
-		i += 1
-		urlKey = k
-		var ss = locust.getStatistics(k)
-		ss.SetRequest(1)
-		tmp := v(user)
-		if tmp == nil {
-			ss.SetRequest(-1)
-			continue
-		}
-		ss.SetResult(user.Duration, user.Err == "")
-		if user.Err != "" {
-			locust.addError(k, user.Err)
-		} else {
-			v, err := user.D["SelfData"]
-			if err {
-				var d float64
-				dd := utils.ParseFloat(utils.GetStringValue(v), d)
-				locust.SetSelfData(dd.(float64))
-				delete(user.D, "SelfData")
+		if v != nil {
+			i += 1
+			urlKey = k
+			var ss = locust.getStatistics(k)
+			ss.SetRequest(1)
+			tmp := v(user)
+			if tmp == nil {
+				ss.SetRequest(-1)
+				continue
+			}
+			ss.SetResult(user.Duration, user.Err == "")
+			if user.Err != "" {
+				locust.addError(k, user.Err)
+			} else {
+				v, err := user.D["SelfData"]
+				if err {
+					var d float64
+					dd := utils.ParseFloat(utils.GetStringValue(v), d)
+					locust.SetSelfData(dd.(float64))
+					delete(user.D, "SelfData")
+				}
 			}
 		}
 		time.Sleep(locust.WaitingDuration(user))
@@ -461,7 +456,9 @@ func (locust *Locust) addError(key string, err string) {
 	locust.mu.Unlock()
 }
 func (locust *Locust) getTask(n int, user *model.ContextModel) (string, HandlerFunc) {
-
+	if locust.taskLen == 0 {
+		return "", nil
+	}
 	if user != nil {
 		next := user.Next
 		if next == "" {
@@ -481,7 +478,7 @@ func (locust *Locust) getTask(n int, user *model.ContextModel) (string, HandlerF
 		}
 	}
 
-	if locust.NextRandom {
+	if locust.UserConfig.NextRandom {
 		n = utils.GetRandNum(0, locust.maxRate)
 	}
 	var i int

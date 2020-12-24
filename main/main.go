@@ -17,7 +17,7 @@ func main() {
 	flag.StringVar(&configFile, "config", "config.toml", "config file path")
 	flag.Parse()
 	log.Println("config file: " + configFile)
-	app = locust.GetAPP(utils.GetPath("../index.html"))
+	app = locust.GetAPP(utils.GetPath("../index.html"), utils.GetPath("../http"))
 	c := locust.SetConfig(app, configFile)
 	if c != nil {
 		app.Start(c.Port)

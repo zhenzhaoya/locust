@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -230,19 +231,19 @@ func GetLastSplit(s string, p string) string {
 	}
 	return s
 }
-func PathExists(path string) (bool, error) {
+func PathExists(path string) bool {
 	_, err := os.Stat(path)
 	if err == nil {
-		return true, nil
+		return true
 	}
 	if os.IsNotExist(err) {
-		return false, nil
+		return false
 	}
-	return false, err
+	return false
 }
 
 func GetPath(path string) string {
-	b, _ := PathExists(path)
+	b := PathExists(path)
 	if !b {
 		rootPath := filepath.Dir(os.Args[0])
 		if strings.HasPrefix(path, "/") || strings.HasPrefix(path, "\\") {
@@ -250,10 +251,35 @@ func GetPath(path string) string {
 		} else {
 			path = rootPath + "/" + path
 		}
-		b, _ = PathExists(path)
+		b = PathExists(path)
 		if !b {
 			log.Println("file not exist. " + path)
 		}
 	}
 	return path
+}
+
+func GetFiles(path string, regName string) ([]string, error) {
+	return filepath.Glob(filepath.Join(path, regName))
+}
+
+func GetFileContent(path string) (string, error) {
+	content, err := ioutil.ReadFile(path)
+	return string(content), err
+}
+
+func SaveFile(path string, content string) error {
+	mode := os.O_CREATE
+	if PathExists(path) {
+		mode = os.O_TRUNC
+	}
+	file, err := os.OpenFile(path, os.O_WRONLY|mode, 0666)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	writer := bufio.NewWriter(file)
+	writer.WriteString(content)
+	writer.Flush()
+	return nil
 }

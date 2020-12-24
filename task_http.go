@@ -7,7 +7,7 @@ import (
 )
 
 func Init(path string, app *Locust, dic map[string]interface{}) bool {
-	b, _ := utils.PathExists(path)
+	b := utils.PathExists(path)
 	if !b {
 		return false
 	}
@@ -24,9 +24,6 @@ func Init(path string, app *Locust, dic map[string]interface{}) bool {
 			if task.StartTask {
 				haveStart = true
 				app.AddStartTask(task.Method, task.GetKey(), func(user *model.ContextModel) *model.ContextModel {
-					// for k, v := range task.ConstD {
-					// 	user.D[k] = v
-					// }
 					if !haveStart {
 						haveStart = true
 						core.CopyConst(core.ConstData, user.D)
@@ -34,6 +31,9 @@ func Init(path string, app *Locust, dic map[string]interface{}) bool {
 					return httpTask(task, user)
 				})
 			} else {
+				if task.GetKey() == "" {
+					continue
+				}
 				app.AddTask(task.Method, task.GetKey(), func(user *model.ContextModel) *model.ContextModel {
 					if !haveStart {
 						haveStart = true
@@ -48,6 +48,7 @@ func Init(path string, app *Locust, dic map[string]interface{}) bool {
 	}
 	return true
 }
+
 func httpTask(task *core.HttpTask, user *model.ContextModel) *model.ContextModel {
 	d := task.GetKVPre(user.D)
 	var url = task.GetUrl(d)
@@ -71,13 +72,7 @@ func httpTask(task *core.HttpTask, user *model.ContextModel) *model.ContextModel
 	if resp.Err != nil {
 		return user.SetError(resp.Duration, resp.StatusCode, resp.Err)
 	}
-	// fmt.Println(string(resp.Body))
 	err := task.CheckResult(resp.StatusCode, string(resp.Body), user.D)
-	// if err == "" {
-	// 	for k, v := range task.SessionD {
-	// 		user.D[k] = v
-	// 	}
-	// }
 	if resp.Cookies != nil && len(resp.Cookies) > 0 {
 		user.Cookies = resp.Cookies
 	}
