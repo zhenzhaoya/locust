@@ -2,6 +2,7 @@ package locust
 
 import (
 	"fmt"
+	"io/ioutil"
 	"sync"
 	"time"
 
@@ -32,6 +33,10 @@ type Locust struct {
 	StartDuration   func() time.Duration
 	SelfPara        func() map[string]interface{}
 	SetData         func(*config.Config)
+	Login           func(string, string) (string, interface{})
+	GetCurrentUser  func(string) interface{}
+	userMap         map[string]string
+	tokenMap        map[string]string
 	urlMap          map[string]*model.Statistics
 	errorMap        map[string]int
 	mu              *sync.Mutex
@@ -54,14 +59,30 @@ type Locust struct {
 	httpFilePath    string
 }
 
-func APP() *Locust {
-	locust := &Locust{}
-	locust.indexHtml = "locust/index.html"
-	return locust._init()
-}
+// func APP() *Locust {
+// 	locust := &Locust{}
+// 	locust.indexHtml = "locust/index.html"
+// 	return locust._init()
+// }
 func GetAPP(indexHtmlPath string, httpFilePath string) *Locust {
 	locust := &Locust{}
 	locust.indexHtml = indexHtmlPath
+	i := strings.LastIndex(indexHtmlPath, "/")
+	if i >= 0 {
+		userFile := indexHtmlPath[0:i+1] + "users.json"
+		if utils.PathExists(userFile) {
+			m := map[string]string{}
+			b, err := ioutil.ReadFile(userFile)
+			if err == nil {
+				err = json.Unmarshal(b, &m)
+				if err == nil {
+					locust.userMap = m
+					locust.tokenMap = map[string]string{}
+				}
+			}
+		}
+	}
+
 	if httpFilePath != "" {
 		httpFilePath = strings.TrimRight(httpFilePath, "/")
 		httpFilePath = strings.TrimRight(httpFilePath, "\\")
@@ -118,10 +139,36 @@ func (locust *Locust) getConfig() string {
 	return locust.UserConfig.ToJson()
 }
 
+func (locust *Locust) login(name string, password string) (string, interface{}) {
+	if locust.Login != nil {
+		return locust.Login(name, password)
+	}
+	if locust.userMap != nil {
+		v := locust.userMap[name]
+		if password == v {
+			token := name + utils.GetRandomString(16)
+			locust.tokenMap[token] = name
+			return token, name
+		}
+		return "", nil
+	}
+	return "", "admin"
+}
+
+func (locust *Locust) getContext(sid string) interface{} {
+	if locust.GetCurrentUser != nil {
+		return locust.GetCurrentUser(sid)
+	}
+	if locust.tokenMap != nil {
+		return locust.tokenMap[sid]
+	}
+	return "admin"
+}
+
 func (locust *Locust) _init() *Locust {
 	locust.UserConfig = config.GetDefault()
 	locust.httpServer = core.GetHttpServer(locust.indexHtml, locust.httpFilePath, locust.getJson,
-		locust.getConfig, locust.getError, locust.setData, locust.setHttpTask)
+		locust.getConfig, locust.getError, locust.setData, locust.setHttpTask, locust.login, locust.getContext)
 	locust.lastTime = time.Now()
 	locust.runFlag = true
 	locust.WaitingDuration = locust.waitingTime

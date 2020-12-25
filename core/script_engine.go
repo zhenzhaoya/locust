@@ -224,7 +224,6 @@ func NewHttpTask(lines []string) []*HttpTask {
 	startLine := -1
 	codeIndex := 0
 	startCode := false
-	// startBody := -1
 	dealCode := false
 	var codeLines []string = make([]string, len(lines)/2, len(lines))
 	for i := 0; i < len(lines); i++ {
@@ -246,7 +245,10 @@ func NewHttpTask(lines []string) []*HttpTask {
 			continue
 		}
 		if task.key != "" {
-			if strings.HasPrefix(line, "###") || strings.HasPrefix(line, "POST ") || strings.HasPrefix(line, "GET ") || strings.HasPrefix(line, "PUT ") || strings.HasPrefix(line, "HEAD ") || strings.HasPrefix(line, "PATCH ") || strings.HasPrefix(line, "DELETE ") {
+			if strings.HasPrefix(line, "###") || strings.HasPrefix(line, "POST ") ||
+				strings.HasPrefix(line, "GET ") || strings.HasPrefix(line, "PUT ") ||
+				strings.HasPrefix(line, "HEAD ") || strings.HasPrefix(line, "PATCH ") ||
+				strings.HasPrefix(line, "DELETE ") {
 				task.dealSetCode(codeLines)
 				tasks = append(tasks, task)
 				task = newHttpTask()
@@ -264,9 +266,10 @@ func NewHttpTask(lines []string) []*HttpTask {
 			}
 		}
 
-		if strings.HasPrefix(line, "POST ") || strings.HasPrefix(line, "GET ") || strings.HasPrefix(line, "PUT ") || strings.HasPrefix(line, "HEAD ") || strings.HasPrefix(line, "PATCH ") || strings.HasPrefix(line, "DELETE ") {
+		if strings.HasPrefix(line, "POST ") || strings.HasPrefix(line, "GET ") ||
+			strings.HasPrefix(line, "PUT ") || strings.HasPrefix(line, "HEAD ") ||
+			strings.HasPrefix(line, "PATCH ") || strings.HasPrefix(line, "DELETE ") {
 			index := strings.Index(line, " ")
-			// ps := strings.Split(line, " ")
 			task.Method = line[0:index]
 			task.url = line[index+1:]
 			if startLine >= 0 {
