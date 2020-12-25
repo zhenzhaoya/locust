@@ -164,12 +164,7 @@
         _date.push(_dt)
         _datas["Real Count"].push(data["RealCount"])
         _datas["Self Data"].push(data["SelfData"])
-
-        if (obj["SuccessCount"] == 0) {
-          _datas["Total Average"].push(0)
-        } else {
-          _datas["Total Average"].push(obj["DurationTime"] / obj["SuccessCount"])
-        }
+        _datas["DurationAllTime"].push(obj["DurationTime"] / (obj["SuccessCount"]+obj["FailCount"]))
         _datas["Latest Average"].push(obj["Latest Average"]/count )
         _datas["Response"].push(obj["Response"])
         _datas["Request"].push(obj["Request"])

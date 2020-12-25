@@ -96,9 +96,7 @@ func SetConfig(app *Locust, configFile string) *config.Config {
 	if configFile != "" {
 		configFile = utils.GetPath(configFile)
 		c := config.New(configFile)
-		if c.UserCount > 0 {
-			myConfig.UserCount = c.UserCount
-		}
+		myConfig.UserCount = c.UserCount
 		if c.MinWait > 0 {
 			myConfig.MinWait = c.MinWait
 		}
@@ -111,12 +109,8 @@ func SetConfig(app *Locust, configFile string) *config.Config {
 		if c.StartMaxWait > 0 {
 			myConfig.StartMaxWait = c.StartMaxWait
 		}
-		if c.BaseUrl != "" {
-			myConfig.BaseUrl = c.BaseUrl
-		}
-		if c.HttpFile != "" {
-			myConfig.HttpFile = c.HttpFile
-		}
+		myConfig.BaseUrl = c.BaseUrl
+		myConfig.HttpFile = c.HttpFile
 		if c.Port > 0 {
 			myConfig.Port = c.Port
 		}
@@ -160,7 +154,11 @@ func (locust *Locust) getContext(sid string) interface{} {
 		return locust.GetCurrentUser(sid)
 	}
 	if locust.tokenMap != nil {
-		return locust.tokenMap[sid]
+		u := locust.tokenMap[sid]
+		if u == "" {
+			return nil
+		}
+		return u
 	}
 	return "admin"
 }

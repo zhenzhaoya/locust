@@ -66,11 +66,11 @@ func (s *Statistics) SetResult(duration time.Duration, success bool) {
 	mu := s.mu
 	mu.Lock()
 	defer mu.Unlock()
+	s.tmpRespCount += 1
+	s.tmpDurationTime += duration.Seconds()
+	s.DurationTime += duration.Seconds()
 	if success {
-		s.tmpRespCount += 1
-		s.tmpDurationTime += duration.Seconds()
 		s.SuccessCount += 1
-		s.DurationTime += duration.Seconds()
 	} else {
 		s.FailCount += 1
 	}
