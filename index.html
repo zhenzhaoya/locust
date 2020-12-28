@@ -63,6 +63,8 @@
       "Request": [],
       "Real Count": [],
       "Self Data": [],
+      "Success Count": [],
+      "Fail Count": [],
     }
     var selfDataName = "SelfData"
     var _userCount = 0;
@@ -180,10 +182,13 @@
         _datas["Latest Average"].push(obj["Latest Average"] / count)
         _datas["Response"].push(obj["Response"])
         _datas["Request"].push(obj["Request"])
+        _datas["Success Count"].push(obj["SuccessCount"])
+        _datas["Fail Count"].push(obj["FailCount"])
         refreshData(myChart, ["Total Average", "Latest Average"], "Average Response Time");
         refreshData(myChart1, ["Response", "Request"], "Request & Response Count Per Second");
         refreshData(myChart2, ["Real Count"], "User Count");
-        refreshData(myChart3, ["Self Data"], data["SelfDataName"] || "Self Data");
+        // refreshData(myChart3, ["Self Data"], data["SelfDataName"] || "Self Data");
+        refreshData(myChart3, ["Success Count", "Fail Count"], "Success/Fail Count");
       });
     }
     _colors = ['#1CD8D2', '#5865FF', '#ff1f83', '#00FF00']
