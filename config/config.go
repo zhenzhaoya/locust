@@ -24,10 +24,10 @@ type Config struct {
 
 func GetDefault() *Config {
 	myConfig := &Config{}
-	myConfig.MinWait = 5000
-	myConfig.MaxWait = 9000
-	myConfig.StartMinWait = 1000
-	myConfig.StartMaxWait = 1000
+	myConfig.MinWait = 1000
+	myConfig.MaxWait = 1000
+	myConfig.StartMinWait = 700
+	myConfig.StartMaxWait = 700
 	myConfig.Port = 8080
 	myConfig.UserCount = 1
 	myConfig.NextRandom = true

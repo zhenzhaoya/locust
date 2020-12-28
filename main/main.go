@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	app *locust.Locust //= locust.GetAPP("../index.html")
+	app *locust.Locust
 )
 
 func main() {

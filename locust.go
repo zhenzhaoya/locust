@@ -59,11 +59,6 @@ type Locust struct {
 	httpFilePath    string
 }
 
-// func APP() *Locust {
-// 	locust := &Locust{}
-// 	locust.indexHtml = "locust/index.html"
-// 	return locust._init()
-// }
 func GetAPP(indexHtmlPath string, httpFilePath string) *Locust {
 	locust := &Locust{}
 	locust.indexHtml = indexHtmlPath
@@ -119,7 +114,9 @@ func SetConfig(app *Locust, configFile string) *config.Config {
 		myConfig.UserCount = c.UserCount
 		myConfig.SelfDataName = c.SelfDataName
 		dic := make(map[string]interface{}, 0)
-		dic["BaseUrl"] = c.BaseUrl
+		if c.BaseUrl != "" {
+			dic["BaseUrl"] = c.BaseUrl
+		}
 		if c.HttpFile != "" {
 			Init(utils.GetPath(c.HttpFile), app, dic)
 		}
@@ -201,11 +198,23 @@ func (locust *Locust) setHttpTask(path string) error {
 	locust.startTasks = make(map[int]*StartInfo)
 
 	dic := make(map[string]interface{}, 0)
-	dic["BaseUrl"] = locust.UserConfig.BaseUrl
+	baseUrl := locust.UserConfig.BaseUrl
+	if baseUrl != "" {
+		dic["BaseUrl"] = baseUrl
+	}
 	Init(path, locust, dic)
 	locust.restart()
 	locust.runFlag = runFlag
 	return nil
+}
+func (locust *Locust) RefreshHttpTask() {
+	dic := make(map[string]interface{}, 0)
+	path := locust.UserConfig.HttpFile
+	baseUrl := locust.UserConfig.BaseUrl
+	if baseUrl != "" {
+		dic["BaseUrl"] = baseUrl
+	}
+	Init(path, locust, dic)
 }
 func (locust *Locust) ClearTask() {
 	locust.runFlag = false
@@ -252,7 +261,6 @@ func (locust *Locust) reset() {
 	for _, v := range locust.urlMap {
 		v.Reset()
 	}
-	// locust.realCount = 0
 	locust.selfData = 0
 }
 func (locust *Locust) getError() string {
