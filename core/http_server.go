@@ -137,6 +137,7 @@ func (server *HttpServer) checkPermission(w http.ResponseWriter, r *http.Request
 	if user != nil && user.Code == 0 {
 		return false
 	}
+	w.Header().Set("Content-type", "application/json")
 	if user != nil {
 		io.WriteString(w, GetResponse(user.Code, user.Message))
 	} else {
@@ -300,7 +301,7 @@ func (server *HttpServer) loginHandler(w http.ResponseWriter, r *http.Request) {
 	b, err := ioutil.ReadAll(r.Body)
 	if err == nil {
 		c := &LoginData{}
-		err := json.Unmarshal(b, &c)
+		err = json.Unmarshal(b, &c)
 		if err == nil {
 			token, user := server.login(c.Name, c.Password)
 			if user == nil {

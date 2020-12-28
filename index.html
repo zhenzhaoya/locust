@@ -5,12 +5,13 @@
   <meta charset="utf-8">
   <link href="static/css/main.css" rel="stylesheet">
   <link href="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
-  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
-  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/echarts-gl/dist/echarts-gl.min.js"></script>
-  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/echarts-stat/dist/ecStat.min.js"></script>
-  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/echarts/dist/extension/dataTool.min.js"></script>
   <script type="text/javascript" src="https://cdn.staticfile.org/jquery/2.1.1/jquery.min.js"></script>
   <script type="text/javascript" src="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+  <!-- <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/echarts-gl/dist/echarts-gl.min.js"></script> -->
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/echarts-gl@2.0.0-rc.3/dist/echarts-gl.min.js"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/echarts-stat/dist/ecStat.min.js"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/echarts/dist/extension/dataTool.min.js"></script>
 </head>
 
 <body>
@@ -27,6 +28,7 @@
           <li><a href="javascript:void(0);">Home</a></li>
           <li><a href="./config.html" target="_blank">Setting</a></li>
           <li><a href="./task.html" target="_blank">Task</a></li>
+          <li><a href="./login.html"><span id="user">Login</span></a></li>
         </ul>
       </div>
     </div>
@@ -47,6 +49,13 @@
     </div>
   </div>
   <script type="text/javascript">
+    $.get("user", function (data, status) {
+      if (data.Code == 0) {
+        $("#user").html(data.Data);
+      } else {
+        $("#user").html("Login");
+      }
+    });
     var _datas = {
       "Total Average": [],
       "Latest Average": [],
@@ -70,8 +79,8 @@
     var _lastTime;
     var _lastErr = 0;
     var filterArr = ["UserCount", "LastTime", "RealCount", "SelfData", "SelfDataName"];
-    function isFilter(d){
-      return filterArr.indexOf(d)<0
+    function isFilter(d) {
+      return filterArr.indexOf(d) < 0
     }
     function setError() {
       var html = '<table class="tab_list table table-bordered table-hover">' +
@@ -84,8 +93,8 @@
           for (i in arr) {
             var d = arr[i];
             var index = d.indexOf('_')
-            m = d.substring(0,index)
-            u = d.substring(index+1)
+            m = d.substring(0, index)
+            u = d.substring(index + 1)
             col23 = u.split('<')
             html += '<tr><td>' + m + '</td><td>' + col23[0] + '</td><td>' + col23[1] + '</td><td>' + data[d] + '</td></tr>'
           }
@@ -110,8 +119,8 @@
         var d = arr[i];
         if (isFilter(d)) {
           var index = d.indexOf('_')
-          m = d.substring(0,index)
-          u = d.substring(index+1)
+          m = d.substring(0, index)
+          u = d.substring(index + 1)
           html += '<tr><td>' + m + '</td><td>' + u + '</td><td>' + data[d].ReqCount + '</td><td>'
             + data[d].DurationATime.toFixed(4) + '</td><td>' + data[d].SuccessCount + '</td><td>' + data[d].FailCount + '</td><td>' + data[d].LastTime + '</td></tr>'
         }
@@ -120,23 +129,26 @@
     }
     function getData() {
       $.get("api", function (data, status) {
+        if (data.Code != 0 && data.UserCount == undefined) {
+          return;
+        }
         _userCount = data["UserCount"];
         var _dt = data["LastTime"]
         var obj = {
           "ReqCount": 0,
-          "DurationTime": 0,
+          "Total Average": 0,
           "Latest Average": 0,
           "Response": 0,
           "Request": 0,
           "SuccessCount": 0,
           "FailCount": 0
         }
-        var count=0;
+        var count = 0;
         for (var d in data) {
           if (isFilter(d)) {
-            count+=1
+            count += 1
             obj["ReqCount"] += data[d]["ReqCount"]
-            obj["DurationTime"] += data[d]["DurationTime"]
+            obj["Total Average"] += data[d]["DurationTime"]
             obj["Latest Average"] += data[d]["DurationATime"]
             obj["Response"] += data[d]["RespACount"]
             obj["Request"] += data[d]["ReqACount"]
@@ -144,7 +156,7 @@
             obj["FailCount"] += data[d]["FailCount"]
           }
         }
-        if (count==0){
+        if (count == 0) {
           count = 1;
         }
         setUrls(data)
@@ -154,7 +166,7 @@
         _lastErr = obj["FailCount"];
         $("#total").html("<p>User Count: " + _userCount + ", Request Count: " + obj["ReqCount"] + ", Success Count: "
           + obj["SuccessCount"] + ", Fail Count: " + obj["FailCount"] + ", Last Time: " + _dt + "</p>"
-          + "<p>Avg Response Time: " + obj["Latest Average"]/count + ", Avg Response Count: " + obj["Response"] + ", Avg Request Count: "
+          + "<p>Avg Response Time: " + obj["Latest Average"] / count + ", Avg Response Count: " + obj["Response"] + ", Avg Request Count: "
           + obj["Request"] + "</p>"
         );
         if (_dt == _lastTime) {
@@ -164,14 +176,14 @@
         _date.push(_dt)
         _datas["Real Count"].push(data["RealCount"])
         _datas["Self Data"].push(data["SelfData"])
-        _datas["DurationAllTime"].push(obj["DurationTime"] / (obj["SuccessCount"]+obj["FailCount"]))
-        _datas["Latest Average"].push(obj["Latest Average"]/count )
+        _datas["Total Average"].push(obj["Total Average"] / (obj["SuccessCount"] + obj["FailCount"]))
+        _datas["Latest Average"].push(obj["Latest Average"] / count)
         _datas["Response"].push(obj["Response"])
         _datas["Request"].push(obj["Request"])
         refreshData(myChart, ["Total Average", "Latest Average"], "Average Response Time");
         refreshData(myChart1, ["Response", "Request"], "Request & Response Count Per Second");
         refreshData(myChart2, ["Real Count"], "User Count");
-        refreshData(myChart3, ["Self Data"], data["SelfDataName"]||"Self Data");
+        refreshData(myChart3, ["Self Data"], data["SelfDataName"] || "Self Data");
       });
     }
     _colors = ['#1CD8D2', '#5865FF', '#ff1f83', '#00FF00']
