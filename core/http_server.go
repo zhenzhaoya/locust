@@ -37,8 +37,14 @@ func json2TaskData(b []byte) (*TaskData, error) {
 	return c, err
 }
 
+type UserContext struct {
+	User    interface{}
+	Code    int
+	Message string
+}
+
 type LoginFunc func(string, string) (string, interface{})
-type ContextFunc func(string) interface{}
+type ContextFunc func(string, string, string) *UserContext
 type GetFunc func() string
 type SetFunc func([]byte) error
 type SetFunc2 func(string) error
@@ -128,24 +134,27 @@ func setContentType(w http.ResponseWriter, url string) {
 }
 func (server *HttpServer) checkPermission(w http.ResponseWriter, r *http.Request) bool {
 	user := server.getUser(r)
-	if user == nil {
-		w.Header().Set("Content-type", "application/json")
-		io.WriteString(w, GetResponse(401, "User not logged in"))
-		return true
+	if user != nil && user.Code == 0 {
+		return false
 	}
-	return false
+	if user != nil {
+		io.WriteString(w, GetResponse(user.Code, user.Message))
+	} else {
+		io.WriteString(w, GetResponse(403, "No permission."))
+	}
+	return true
 }
 func (server *HttpServer) apiHandler(w http.ResponseWriter, r *http.Request) {
-	// if server.checkPermission(w, r) {
-	// 	return
-	// }
+	if server.checkPermission(w, r) {
+		return
+	}
 	if r.Method == "GET" {
 		w.Header().Set("Content-type", "application/json")
 		io.WriteString(w, server.Json())
 	} else if r.Method == "POST" {
-		if server.checkPermission(w, r) {
-			return
-		}
+		// if server.checkPermission(w, r) {
+		// 	return
+		// }
 		server.setConfig(w, r)
 	}
 }
@@ -265,21 +274,25 @@ func (server *HttpServer) taskHandler(w http.ResponseWriter, r *http.Request) {
 		io.WriteString(w, res.Response(500, fmt.Sprintf("Request method '%s' not supported", r.Method)))
 	}
 }
-func (server *HttpServer) getUser(r *http.Request) interface{} {
+func (server *HttpServer) getUser(r *http.Request) *UserContext {
 	c, err := r.Cookie("__sid")
 	if err != nil {
 		return nil
 	}
-	return server.user(c.Value)
+	return server.user(c.Value, r.Method, r.URL.Path)
 }
 
 func (server *HttpServer) userHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-type", "application/json")
 	user := server.getUser(r)
 	if user != nil {
-		io.WriteString(w, GetSuccessResponse(user))
+		if user.Code == 0 {
+			io.WriteString(w, GetSuccessResponse(user.User))
+		} else {
+			io.WriteString(w, GetResponse(user.Code, user.Message))
+		}
 	} else {
-		io.WriteString(w, GetResponse(401, "User not logged in"))
+		io.WriteString(w, GetResponse(403, "No permission."))
 	}
 }
 func (server *HttpServer) loginHandler(w http.ResponseWriter, r *http.Request) {

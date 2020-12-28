@@ -34,7 +34,7 @@ type Locust struct {
 	SelfPara        func() map[string]interface{}
 	SetData         func(*config.Config)
 	Login           func(string, string) (string, interface{})
-	GetCurrentUser  func(string) interface{}
+	GetContext      func(string, string, string) *core.UserContext
 	userMap         map[string]string
 	tokenMap        map[string]string
 	urlMap          map[string]*model.Statistics
@@ -146,18 +146,23 @@ func (locust *Locust) login(name string, password string) (string, interface{}) 
 	return "", "admin"
 }
 
-func (locust *Locust) getContext(sid string) interface{} {
-	if locust.GetCurrentUser != nil {
-		return locust.GetCurrentUser(sid)
+func (locust *Locust) getContext(sid string, method string, path string) *core.UserContext {
+	if locust.GetContext != nil {
+		return locust.GetContext(sid, method, path)
 	}
+	c := &core.UserContext{}
 	if locust.tokenMap != nil {
 		u := locust.tokenMap[sid]
 		if u == "" {
-			return nil
+			c.Code = 401
+			c.Message = "Get token error."
+		} else {
+			c.User = u
 		}
-		return u
+	} else {
+		c.User = "Admin"
 	}
-	return "admin"
+	return c
 }
 
 func (locust *Locust) _init() *Locust {
