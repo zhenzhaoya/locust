@@ -80,6 +80,8 @@
     var app = {};
     var _lastTime;
     var _lastErr = 0;
+    var _lastSuccessCount = -1;
+    var _lastFailCount = -1;
     var filterArr = ["UserCount", "LastTime", "RealCount", "SelfData", "SelfDataName"];
     function isFilter(d) {
       return filterArr.indexOf(d) < 0
@@ -130,7 +132,7 @@
       $("#urls").html(html + '</tbody></table>');
     }
     function getData() {
-      $.get("api", function (data, status) {
+      $.get("data", function (data, status) {
         if (data.Code != 0 && data.UserCount == undefined) {
           return;
         }
@@ -182,8 +184,15 @@
         _datas["Latest Average"].push(obj["Latest Average"] / count)
         _datas["Response"].push(obj["Response"])
         _datas["Request"].push(obj["Request"])
-        _datas["Success Count"].push(obj["SuccessCount"])
-        _datas["Fail Count"].push(obj["FailCount"])
+        if (_lastSuccessCount >= 0) {
+          _datas["Success Count"].push(obj["SuccessCount"] - _lastSuccessCount)
+          _datas["Fail Count"].push(obj["FailCount"] - _lastFailCount)
+        }else{
+          _datas["Success Count"].push(0);
+          _datas["Fail Count"].push(0);
+        }
+        _lastSuccessCount = obj["SuccessCount"];
+        _lastFailCount = obj["FailCount"];
         refreshData(myChart, ["Total Average", "Latest Average"], "Average Response Time");
         refreshData(myChart1, ["Response", "Request"], "Request & Response Count Per Second");
         refreshData(myChart2, ["Real Count"], "User Count");

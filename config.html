@@ -63,7 +63,7 @@
       }
     });
     function getConfig() {
-      $.get("para", function (d, status) {
+      $.get("config", function (d, status) {
         if (status == "success") {
           $("#data").html(JSON.stringify(d, null, 4))
         } else {
@@ -75,7 +75,7 @@
     function mySubmit() {
       $("#spMsg").html('');
       // var data = JSON.parse($("#data").val())
-      $.post("api", $("#data").val(), function (d, status) {
+      $.post("config", $("#data").val(), function (d, status) {
         if (status == 200) {
           $("#spMsg").html(d.message);
         } else {

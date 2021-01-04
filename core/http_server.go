@@ -159,6 +159,18 @@ func (server *HttpServer) apiHandler(w http.ResponseWriter, r *http.Request) {
 		server.setConfig(w, r)
 	}
 }
+
+func (server *HttpServer) configHandler(w http.ResponseWriter, r *http.Request) {
+	if server.checkPermission(w, r) {
+		return
+	}
+	if r.Method == "GET" {
+		w.Header().Set("Content-type", "application/json")
+		io.WriteString(w, server.Para())
+	} else if r.Method == "POST" {
+		server.setConfig(w, r)
+	}
+}
 func (server *HttpServer) setConfig(w http.ResponseWriter, r *http.Request) {
 	if server.checkPermission(w, r) {
 		return
@@ -320,12 +332,13 @@ func (server *HttpServer) loginHandler(w http.ResponseWriter, r *http.Request) {
 }
 func (server *HttpServer) StartServer(port int) {
 	http.HandleFunc("/static/", server.staticHandler)
-	http.HandleFunc("/api", server.apiHandler)
+	http.HandleFunc("/config", server.configHandler)
+	http.HandleFunc("/data", server.apiHandler)
 	http.HandleFunc("/err", server.errHandler)
-	http.HandleFunc("/para", server.paraHandler)
 	http.HandleFunc("/task", server.taskHandler)
 	http.HandleFunc("/user", server.userHandler)
 	http.HandleFunc("/login", server.loginHandler)
+
 	http.HandleFunc("/", server.staticHandler)
 	err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 	if err != nil {
