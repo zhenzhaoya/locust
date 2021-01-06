@@ -45,6 +45,7 @@ type UserContext struct {
 
 type LoginFunc func(string, string) (string, interface{})
 type ContextFunc func(string, string, string) *UserContext
+type ExtendFunc func(http.ResponseWriter, *http.Request)
 type GetFunc func() string
 type SetFunc func([]byte) error
 type SetFunc2 func(string) error
@@ -57,6 +58,7 @@ type HttpServer struct {
 	HttpTask   SetFunc2
 	login      LoginFunc
 	user       ContextFunc
+	extend     ExtendFunc
 	httpFolder string
 	port       int
 }
@@ -108,14 +110,15 @@ func GetErrorResponse(err error) string {
 }
 
 func GetHttpServer(indexHtml string, httpFolder string, get GetFunc, para GetFunc, err GetFunc,
-	set SetFunc, httpTask SetFunc2, login LoginFunc, user ContextFunc) *HttpServer {
+	set SetFunc, httpTask SetFunc2, login LoginFunc, user ContextFunc, extend ExtendFunc) *HttpServer {
 	if _server == nil {
 		start := strings.LastIndex(indexHtml, "/")
 		if start > -1 {
 			basePath = indexHtml[0 : start+1]
 		}
 		_server = &HttpServer{IndexHtml: indexHtml, Json: get, Para: para,
-			Error: err, Set: set, HttpTask: httpTask, httpFolder: httpFolder, login: login, user: user}
+			Error: err, Set: set, HttpTask: httpTask, httpFolder: httpFolder,
+			login: login, user: user, extend: extend}
 	}
 	return _server
 }
@@ -330,6 +333,12 @@ func (server *HttpServer) loginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	io.WriteString(w, GetErrorResponse(err))
 }
+func (server *HttpServer) extendHandler(w http.ResponseWriter, r *http.Request) {
+	if server.checkPermission(w, r) {
+		return
+	}
+	server.extend(w, r)
+}
 func (server *HttpServer) StartServer(port int) {
 	http.HandleFunc("/static/", server.staticHandler)
 	http.HandleFunc("/config", server.configHandler)
@@ -338,6 +347,7 @@ func (server *HttpServer) StartServer(port int) {
 	http.HandleFunc("/task", server.taskHandler)
 	http.HandleFunc("/user", server.userHandler)
 	http.HandleFunc("/login", server.loginHandler)
+	http.HandleFunc("/extend/", server.extendHandler)
 
 	http.HandleFunc("/", server.staticHandler)
 	err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil)

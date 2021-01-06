@@ -2,7 +2,9 @@ package locust
 
 import (
 	"fmt"
+	"io"
 	"io/ioutil"
+	"net/http"
 	"sync"
 	"time"
 
@@ -35,6 +37,7 @@ type Locust struct {
 	SetData         func(*config.Config)
 	Login           func(string, string) (string, interface{})
 	GetContext      func(string, string, string) *core.UserContext
+	ExtendHandler   core.ExtendFunc
 	userMap         map[string]string
 	tokenMap        map[string]string
 	urlMap          map[string]*model.Statistics
@@ -164,11 +167,19 @@ func (locust *Locust) getContext(sid string, method string, path string) *core.U
 	}
 	return c
 }
-
+func (locust *Locust) extendHandler(w http.ResponseWriter, r *http.Request) {
+	if locust.ExtendHandler != nil {
+		locust.ExtendHandler(w, r)
+	} else {
+		w.Header().Set("Content-type", "application/json")
+		io.WriteString(w, core.GetResponse(501, "Not implemented."))
+	}
+}
 func (locust *Locust) _init() *Locust {
 	locust.UserConfig = config.GetDefault()
 	locust.httpServer = core.GetHttpServer(locust.indexHtml, locust.httpFilePath, locust.getJson,
-		locust.getConfig, locust.getError, locust.setData, locust.setHttpTask, locust.login, locust.getContext)
+		locust.getConfig, locust.getError, locust.setData, locust.setHttpTask,
+		locust.login, locust.getContext, locust.extendHandler)
 	locust.lastTime = time.Now()
 	locust.runFlag = true
 	locust.WaitingDuration = locust.waitingTime
@@ -212,14 +223,20 @@ func (locust *Locust) setHttpTask(path string) error {
 	locust.runFlag = runFlag
 	return nil
 }
-func (locust *Locust) RefreshHttpTask() {
+
+func (locust *Locust) RefreshHttpTask(lines []string) {
 	dic := make(map[string]interface{}, 0)
-	path := locust.UserConfig.HttpFile
 	baseUrl := locust.UserConfig.BaseUrl
 	if baseUrl != "" {
 		dic["BaseUrl"] = baseUrl
 	}
-	Init(path, locust, dic)
+
+	if lines != nil {
+		InitLines(lines, locust, dic)
+	} else {
+		path := locust.UserConfig.HttpFile
+		Init(path, locust, dic)
+	}
 }
 func (locust *Locust) ClearTask() {
 	locust.runFlag = false

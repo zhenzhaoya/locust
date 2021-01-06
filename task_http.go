@@ -6,12 +6,7 @@ import (
 	"github.com/zhenzhaoya/locust/utils"
 )
 
-func Init(path string, app *Locust, dic map[string]interface{}) bool {
-	b := utils.PathExists(path)
-	if !b {
-		return false
-	}
-	lines := utils.GetFileLines(path)
+func InitLines(lines []string, app *Locust, dic map[string]interface{}) bool {
 	if lines != nil {
 		if dic != nil {
 			core.CopyConst(dic, core.ConstData)
@@ -43,10 +38,20 @@ func Init(path string, app *Locust, dic map[string]interface{}) bool {
 				}, task.Rate)
 			}
 		}
-	} else {
-		panic("File not found: " + path)
 	}
 	return true
+}
+
+func Init(path string, app *Locust, dic map[string]interface{}) bool {
+	b := utils.PathExists(path)
+	if !b {
+		return false
+	}
+	lines := utils.GetFileLines(path)
+	if lines == nil {
+		panic("File not found: " + path)
+	}
+	return InitLines(lines, app, dic)
 }
 
 func httpTask(task *core.HttpTask, user *model.ContextModel) *model.ContextModel {

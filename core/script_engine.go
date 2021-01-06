@@ -155,7 +155,6 @@ func (task *HttpTask) getDataValue(value string, jMap *utils.JsonMap, d map[stri
 			v := jMap.GetValue(key)
 			if v1 == "" && v2 == "" && v != nil && utils.GetValueType(v) != "string" {
 				return v
-				// value = v1 + utils.GetStringValue(v) + v2
 			} else {
 				value = v1 + utils.GetStringValue(v) + v2
 			}
@@ -185,9 +184,6 @@ func contrastStr(opt string, v string, v2 string) bool {
 	return true
 }
 func contrastInt(opt string, v float64, v2 float64) bool {
-	// var v float64
-	// v = utils.ParseFloat(v1, v).(float64)
-	// v, _ := strconv.Atoi(v1)
 	switch opt {
 	case "==":
 		return v == v2
@@ -206,11 +202,9 @@ func contrastInt(opt string, v float64, v2 float64) bool {
 }
 func newHttpTask() *HttpTask {
 	task := &HttpTask{}
-	// task.ConstD = d
 	task.CheckD = make(map[string][2]string, 0)
 	task.Rate = 1
 	task.header = make(map[string]string, 0)
-	// task.Code = make(map[string]func() string, 0)
 	return task
 }
 func ClearArr(arr []string) {
@@ -301,6 +295,14 @@ func NewHttpTask(lines []string) []*HttpTask {
 			continue
 		}
 		if task.key == "" {
+			if strings.HasPrefix(line, "<%") {
+				startCode = true
+				line = utils.Trim(line[2:])
+				if line != "" {
+					codeLines[codeIndex] = line
+					codeIndex += 1
+				}
+			}
 			continue
 		}
 
