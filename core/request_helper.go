@@ -30,7 +30,7 @@ func NewDefaultPostOptions(data string, cookies []*http.Cookie) Options {
 	return Options{"POST", header, data, cookies}
 }
 func Req(url string, opts Options) *model.RespStruct {
-	client := &http.Client{}
+	// client := &http.Client{}
 	req, err := http.NewRequest(opts.Method, url, strings.NewReader(opts.Data))
 	if err != nil {
 		fmt.Println("Req.0", err)
@@ -48,7 +48,8 @@ func Req(url string, opts Options) *model.RespStruct {
 	var tb time.Time
 	var el time.Duration
 	tb = time.Now()
-	resp, err := client.Do(req)
+	resp, err := http.DefaultTransport.RoundTrip(req)
+	// resp, err := http.DefaultClient.Do(req)
 	el = time.Since(tb)
 
 	var header http.Header
