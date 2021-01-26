@@ -53,15 +53,19 @@ func (task *HttpTask) CheckResult(statusCode int, html string, d map[string]inte
 	// fmt.Println(html)
 	s, ok := task.CheckD["StatusCode"]
 	b := false
+	sign := "=="
+	code := "200"
 	if ok {
 		var v float64
 		v = utils.ParseFloat(s[1], v).(float64)
-		b = contrastInt(s[0], v, float64(statusCode))
+		b = contrastInt(s[0], float64(statusCode), v)
+		sign = s[0]
+		code = s[1]
 	} else {
 		b = statusCode == 200
 	}
 	if !b {
-		return fmt.Sprint("Data mismatch: StatusCode = ", statusCode)
+		return fmt.Sprintf(`Data mismatch: StatusCode %v %v`, sign, code)
 	}
 	var jMap *utils.JsonMap
 	if task.isJson { // json数组先不处理
