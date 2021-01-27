@@ -280,9 +280,10 @@ func (locust *Locust) reset() {
 	locust.mu.Lock()
 	defer locust.mu.Unlock()
 	locust.errorMap = make(map[string]int)
-	for _, v := range locust.urlMap {
-		v.Reset()
-	}
+	locust.urlMap = make(map[string]*model.Statistics)
+	// for _, v := range locust.urlMap {
+	// 	v.Reset()
+	// }
 	locust.selfData = 0
 }
 func (locust *Locust) getError() string {
@@ -479,14 +480,20 @@ func (locust *Locust) doTask() {
 
 	i := 0
 	for {
-		if !locust.runFlag {
-			if !(locust.subFlag && locust.UserConfig.UserCount >= locust.realCount) {
-				if locust.UserLogout != nil {
-					locust.UserLogout(user)
-				}
-				break
+		if locust.UserConfig.UserCount < locust.realCount {
+			if locust.UserLogout != nil {
+				locust.UserLogout(user)
 			}
+			break
 		}
+		// if !locust.runFlag {
+		// 	if !(locust.subFlag && locust.UserConfig.UserCount >= locust.realCount) {
+		// 		if locust.UserLogout != nil {
+		// 			locust.UserLogout(user)
+		// 		}
+		// 		break
+		// 	}
+		// }
 		if i >= locust.maxRate {
 			i = 0
 		}
