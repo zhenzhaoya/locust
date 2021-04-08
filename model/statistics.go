@@ -23,6 +23,7 @@ type Statistics struct {
 	tmpReqCount     int
 	tmpRespCount    int
 	tmpDurationTime float64
+	tmpFailCount    int
 }
 
 func GetStatistics() *Statistics {
@@ -47,6 +48,7 @@ func (s *Statistics) Reset() {
 	s.tmpRespCount = 0
 	s.tmpReqCount = 0
 	s.tmpDurationTime = 0
+	s.tmpFailCount = 0
 }
 
 func (u *Statistics) ToString() string {
@@ -55,6 +57,7 @@ func (u *Statistics) ToString() string {
 	}
 	return ""
 }
+
 func (s *Statistics) SetRequest(count int) {
 	var mu = s.mu
 	mu.Lock()
@@ -62,6 +65,7 @@ func (s *Statistics) SetRequest(count int) {
 	s.ReqCount += count
 	s.tmpReqCount += count
 }
+
 func (s *Statistics) SetResult(duration time.Duration, success bool) {
 	mu := s.mu
 	mu.Lock()
@@ -73,6 +77,7 @@ func (s *Statistics) SetResult(duration time.Duration, success bool) {
 		s.SuccessCount += 1
 	} else {
 		s.FailCount += 1
+		s.tmpFailCount += 1
 	}
 	seconds := time.Since(s.LastTime).Seconds()
 	if seconds > AverageTimeInterval {
@@ -82,10 +87,11 @@ func (s *Statistics) SetResult(duration time.Duration, success bool) {
 		} else {
 			s.DurationATime = 0
 		}
-		s.RespACount = (float64)(s.tmpRespCount) / seconds
+		s.RespACount = (float64)(s.tmpRespCount-s.tmpFailCount) / seconds
 		s.ReqACount = (float64)(s.tmpReqCount) / seconds
 		s.tmpRespCount = 0
 		s.tmpReqCount = 0
 		s.tmpDurationTime = 0
+		s.tmpFailCount = 0
 	}
 }

@@ -8,8 +8,8 @@
   <script type="text/javascript" src="https://cdn.staticfile.org/jquery/2.1.1/jquery.min.js"></script>
   <script type="text/javascript" src="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
-  <!-- <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/echarts-gl/dist/echarts-gl.min.js"></script> -->
-  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/echarts-gl@2.0.0-rc.3/dist/echarts-gl.min.js"></script>
+  <script type="text/javascript"
+    src="https://cdn.jsdelivr.net/npm/echarts-gl@2.0.0-rc.3/dist/echarts-gl.min.js"></script>
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/echarts-stat/dist/ecStat.min.js"></script>
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/echarts/dist/extension/dataTool.min.js"></script>
 </head>
@@ -184,10 +184,13 @@
         _datas["Latest Average"].push(obj["Latest Average"] / count)
         _datas["Response"].push(obj["Response"])
         _datas["Request"].push(obj["Request"])
-        if (_lastSuccessCount >= 0) {
-          _datas["Success Count"].push(obj["SuccessCount"] - _lastSuccessCount)
-          _datas["Fail Count"].push(obj["FailCount"] - _lastFailCount)
-        }else{
+
+        var s = obj["SuccessCount"] - _lastSuccessCount;
+        var f = obj["FailCount"] - _lastFailCount;
+        if (_lastSuccessCount >= 0 && s >= 0 && f >= 0) {
+          _datas["Success Count"].push(s)
+          _datas["Fail Count"].push(f)
+        } else {
           _datas["Success Count"].push(0);
           _datas["Fail Count"].push(0);
         }
