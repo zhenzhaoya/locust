@@ -11,7 +11,7 @@ func InitLines(lines []string, app *Locust, dic map[string]interface{}) bool {
 		if dic != nil {
 			core.CopyConst(dic, core.ConstData)
 		}
-
+		core.DealJsonData(lines)
 		tasks := core.NewHttpTask(lines)
 		haveStart := false
 		for i := 0; i < len(tasks); i++ {

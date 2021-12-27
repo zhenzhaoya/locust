@@ -93,6 +93,9 @@ func Json2map(bs []byte) *JsonMap {
 	}
 	return nil
 }
+func JsonStr2map(str string) *JsonMap {
+	return Json2map([]byte(str))
+}
 func (j *JsonMap) GetMap(key string) *JsonMap {
 	v := j.Data[key]
 	if v == nil {

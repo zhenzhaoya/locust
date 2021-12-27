@@ -13,6 +13,7 @@ import (
 var (
 	mu        *sync.Mutex            = new(sync.Mutex)
 	ConstData map[string]interface{} = make(map[string]interface{}, 0)
+	ConstJson map[string]interface{} = make(map[string]interface{}, 0)
 )
 
 type HttpTask struct {
@@ -65,6 +66,7 @@ func (task *HttpTask) CheckResult(statusCode int, html string, d map[string]inte
 		b = statusCode == 200
 	}
 	if !b {
+		fmt.Printf("Response StatusCode: %d", statusCode)
 		return fmt.Sprintf(`Data mismatch: StatusCode %v %v`, sign, code)
 	}
 	var jMap *utils.JsonMap
@@ -216,6 +218,63 @@ func ClearArr(arr []string) {
 		arr[i] = ""
 	}
 }
+
+func DealJsonData(lines []string) {
+	startCode := false
+	startJson := false
+	startLine := 0
+	var codeLines []string = make([]string, 0)
+	for i := 0; i < len(lines); i++ {
+		line := lines[i]
+		line = utils.Trim(line)
+		if startJson {
+			if strings.HasPrefix(line, "//") || strings.HasPrefix(line, "# ") {
+				line = ""
+			}
+			if strings.HasSuffix(line, "%>") {
+				startJson = false
+				startCode = false
+				line = utils.Trim(strings.Trim(line, "%>"))
+			}
+			if line != "" {
+				codeLines = append(codeLines, line)
+			}
+			if !startCode {
+				for j := startLine; j <= i; j++ {
+					lines[j] = ""
+				}
+				break
+			}
+			continue
+		}
+
+		if !startCode && strings.HasPrefix(line, "<%") {
+			startCode = true
+			startLine = i
+			line = utils.Trim(line[2:])
+		}
+
+		if startCode {
+			if strings.HasPrefix(line, "//") || strings.HasPrefix(line, "# ") {
+			} else if line != "" && line[0] == '{' {
+				startJson = true
+				codeLines = append(codeLines, line)
+			} else {
+				startCode = false
+			}
+		}
+
+	}
+	str := strings.Join(codeLines, "")
+	if str == "" {
+		return
+	}
+	mp := utils.JsonStr2map(str)
+	for m := range mp.Data {
+		ConstJson[m] = mp.Data[m]
+	}
+}
+
 func NewHttpTask(lines []string) []*HttpTask {
 	tasks := make([]*HttpTask, 0)
 	task := newHttpTask()
@@ -556,13 +615,7 @@ func (task *HttpTask) dealSetCode(lines []string) {
 			index = strings.Index(line, " ")
 			opt := line[0:index]
 			line = line[index+1:]
-			// line = preDeal(line)
-			// if opt == "=" && !utils.StrContains(line, []string{"Data[", "RandomNum(", "RandomString("}) {
-			// 	value := task.dealString(getOperator(line))
-			// 	task.setKeyValue(startStr, postDeal(value))
-			// } else {
 			if opt == "=" && strings.HasPrefix(line, "\"") && strings.HasSuffix(line, "\"") {
-				// task.ConstD[startStr] = strings.Trim(line, "\"")
 				if startStr[0] > 64 && startStr[0] < 97 {
 					saveConst(ConstData, startStr, strings.Trim(line, "\""))
 					continue
@@ -584,20 +637,14 @@ func (task *HttpTask) GetKVPre(d map[string]interface{}) map[string]interface{} 
 	for k, v := range d {
 		tmp[k] = v
 	}
-	// nextTask, ok := getConst(ConstData, "nextTask")
-	// if ok {
-	// 	d["nextTask"] = postDeal(task.dealString(getOperator(preDeal(nextTask.(string))), d))
-	// }
 	for k, v := range task.CheckD {
 		opt := v[0]
 		line := v[1]
 		line = preDeal(line)
 		if opt == "=" && !utils.StrContains(line, []string{"Data["}) {
 			value := postDeal(task.dealString(getOperator(line), d))
-			// task.setKeyValue(startStr, postDeal(value))
 			if k[0] > 64 && k[0] < 97 || k == "nextTask" {
 				d[k] = value
-				// saveConst(ConstData, k, value)
 			}
 			tmp[k] = value
 		}
@@ -662,7 +709,7 @@ func (task *HttpTask) GetBody(d map[string]interface{}) string {
 		index := strings.Index(v, "<%=")
 		if index >= 0 {
 			index2 := strings.Index(v, "%>")
-			line := v[index+3 : index2]
+			line := preDeal(v[index+3 : index2])
 			value := task.dealString(getOperator(line), d)
 			v = v[0:index] + postDeal(value) + v[index2+2:]
 		} else {
