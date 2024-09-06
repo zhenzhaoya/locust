@@ -13,7 +13,7 @@ import (
 var (
 	mu        *sync.Mutex            = new(sync.Mutex)
 	ConstData map[string]interface{} = make(map[string]interface{}, 0)
-	ConstJson map[string]interface{} = make(map[string]interface{}, 0)
+	// ConstJson map[string]interface{} = make(map[string]interface{}, 0)
 )
 
 type HttpTask struct {
@@ -27,7 +27,7 @@ type HttpTask struct {
 	body      string
 	StartTask bool
 	isJson    bool
-	mu        *sync.Mutex
+	// mu        *sync.Mutex
 
 	// Code map[string]func() string
 	// data map[string]interface{} //临时变量
@@ -111,7 +111,7 @@ func (task *HttpTask) CheckResult(statusCode int, html string, d map[string]inte
 				}
 			} else {
 				var tk interface{}
-				if strings.Index(k, "Data[\"") >= 0 {
+				if strings.Contains(k, "Data[\"") {
 					tk = task.getDataValue(k, jMap, d)
 				} else {
 					tk = task.getValue(k, d)
@@ -121,7 +121,7 @@ func (task *HttpTask) CheckResult(statusCode int, html string, d map[string]inte
 					}
 				}
 				var tv interface{}
-				if strings.Index(v[1], "Data[\"") >= 0 {
+				if strings.Contains(v[1], "Data[\"") {
 					tv = task.getDataValue(v[1], jMap, d)
 				} else {
 					tv = task.getValue(v[1], d)
@@ -270,8 +270,8 @@ func DealJsonData(lines []string) {
 		return
 	}
 	mp := utils.JsonStr2map(str)
-	for m := range mp.Data {
-		ConstJson[m] = mp.Data[m]
+	for k, v := range mp.Data {
+		ConstData[k] = v
 	}
 }
 

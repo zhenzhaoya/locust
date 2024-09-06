@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"log"
+	"strconv"
 
 	"github.com/zhenzhaoya/locust"
 	"github.com/zhenzhaoya/locust/utils"
@@ -20,8 +21,10 @@ func main() {
 	app = locust.GetAPP(utils.GetPath("../index.html"), utils.GetPath("../http"))
 	c := locust.SetConfig(app, configFile)
 	if c != nil {
+		log.Println("port: " + strconv.Itoa(c.Port))
 		app.Start(c.Port)
 	} else {
+		log.Println("port: 8080")
 		app.Start(8080)
 	}
 
